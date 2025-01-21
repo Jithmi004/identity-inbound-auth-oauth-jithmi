@@ -301,6 +301,8 @@ public class AuthorizationHandlerManager {
         }
         // Remove the internal scopes from requested scopes for further validation.
         removeInternalScopesFromRequestedScopes(authzReqMsgCtx);
+        // Remove allowed scopes from requested scopes since they are added back later.
+        removeAllowedScopesFromRequestedScopes(authzReqMsgCtx, requestedAllowedScopes);
         // Adding the authorized internal scopes to tokReqMsgCtx for any special validators to use.
         authzReqMsgCtx.setAuthorizedInternalScopes(authorizedInternalScopes);
         boolean isDropUnregisteredScopes = OAuthServerConfiguration.getInstance().isDropUnregisteredScopes();
@@ -394,7 +396,25 @@ public class AuthorizationHandlerManager {
         }
         authzReqMsgCtx.getAuthorizationReqDTO().setScopes(scopes.toArray(new String[0]));
     }
-
+    /**
+     * Remove allowed scopes from requested scopes to be validated.
+     *
+     * @param authzReqMsgCtx authzReqMsgCtx
+     */
+    private void removeAllowedScopesFromRequestedScopes(OAuthAuthzReqMessageContext authzReqMsgCtx,
+            List<String> requestedAllowedScopes) {
+        if (authzReqMsgCtx.getAuthorizationReqDTO() == null || authzReqMsgCtx.getAuthorizationReqDTO()
+                .getScopes() == null) {
+            return;
+        }
+        List<String> scopes = new ArrayList<>();
+        for (String scope : authzReqMsgCtx.getAuthorizationReqDTO().getScopes()) {
+            if (!requestedAllowedScopes.contains(scope)) {
+                scopes.add(scope);
+            }
+        }
+        authzReqMsgCtx.getAuthorizationReqDTO().setScopes(scopes.toArray(new String[0]));
+    }
     /**
      * Drop unregistered from requested scopes.
      *
